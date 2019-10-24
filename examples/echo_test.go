@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/miketonks/testy"
 	"github.com/stretchr/testify/assert"
-
-	"testy"
 )
 
 func TestEchoClient(t *testing.T) {

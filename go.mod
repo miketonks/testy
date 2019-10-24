@@ -1,4 +1,4 @@
-module testy
+module github.com/miketonks/testy
 
 go 1.12
 
