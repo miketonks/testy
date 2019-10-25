@@ -2,6 +2,7 @@ package testy
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -80,6 +81,10 @@ func (c *Client) Post(url string) *Response {
 
 // Execute ...
 func (c *Client) Execute(method, url string) *Response {
+
+	if len(c.QueryParam) > 0 {
+		url = fmt.Sprintf("%s?%s", url, c.QueryParam.Encode())
+	}
 
 	var reader io.Reader
 	if c.Body != nil {
