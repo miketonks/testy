@@ -8,6 +8,29 @@ import (
 	"strings"
 )
 
+const (
+	// MethodGet HTTP method
+	MethodGet = "GET"
+
+	// MethodPost HTTP method
+	MethodPost = "POST"
+
+	// MethodPut HTTP method
+	MethodPut = "PUT"
+
+	// MethodDelete HTTP method
+	MethodDelete = "DELETE"
+
+	// MethodPatch HTTP method
+	MethodPatch = "PATCH"
+
+	// MethodHead HTTP method
+	MethodHead = "HEAD"
+
+	// MethodOptions HTTP method
+	MethodOptions = "OPTIONS"
+)
+
 // Client ...
 type Client struct {
 	handler    http.Handler
@@ -40,7 +63,18 @@ func New(h http.Handler) *Client {
 
 // Get ...
 func (c *Client) Get(url string) *Response {
-	request, _ := http.NewRequest("GET", url, nil)
+	return c.Execute("GET", url)
+}
+
+// Patch ...
+func (c *Client) Patch(url string) *Response {
+	return c.Execute("PATCH", url)
+}
+
+// Execute ...
+func (c *Client) Execute(method, url string) *Response {
+
+	request, _ := http.NewRequest(method, url, nil)
 	request.Header = c.Header
 
 	recorder := httptest.NewRecorder()
