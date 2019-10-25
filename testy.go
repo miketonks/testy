@@ -1,6 +1,8 @@
 package testy
 
 import (
+	"bytes"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -37,7 +39,7 @@ type Client struct {
 	QueryParam url.Values
 	FormData   url.Values
 	Header     http.Header
-	Body       interface{}
+	Body       []byte
 	Result     interface{}
 	Error      interface{}
 }
@@ -71,10 +73,19 @@ func (c *Client) Patch(url string) *Response {
 	return c.Execute("PATCH", url)
 }
 
+// Post ...
+func (c *Client) Post(url string) *Response {
+	return c.Execute("POST", url)
+}
+
 // Execute ...
 func (c *Client) Execute(method, url string) *Response {
 
-	request, _ := http.NewRequest(method, url, nil)
+	var reader io.Reader
+	if c.Body != nil {
+		reader = bytes.NewReader(c.Body)
+	}
+	request, _ := http.NewRequest(method, url, reader)
 	request.Header = c.Header
 
 	recorder := httptest.NewRecorder()
@@ -194,6 +205,59 @@ func (c *Client) SetQueryString(query string) *Client {
 	}
 	return c
 }
+
+// SetBody ...
+func (c *Client) SetBody(body []byte) *Client {
+	c.Body = body
+	return c
+}
+
+//
+// // SetBody ...
+// func (c *Client) SetBody(body interface{}) *Client {
+//
+// 	var bodyBytes []byte
+// 	contentType := r.Header.Get("Content-Type")
+// 	kind := kindOf(body)
+// 	r.bodyBuf = nil
+//
+// 	if reader, ok := r.Body.(io.Reader); ok {
+// 		if c.setContentLength || r.setContentLength { // keep backward compability
+// 			r.bodyBuf = acquireBuffer()
+// 			_, err = r.bodyBuf.ReadFrom(reader)
+// 			r.Body = nil
+// 		} else {
+// 			// Otherwise buffer less processing for `io.Reader`, sounds good.
+// 			return
+// 		}
+// 	} else if b, ok := r.Body.([]byte); ok {
+// 		bodyBytes = b
+// 	} else if s, ok := r.Body.(string); ok {
+// 		bodyBytes = []byte(s)
+// 	} else if IsJSONType(contentType) &&
+// 		(kind == reflect.Struct || kind == reflect.Map || kind == reflect.Slice) {
+// 		bodyBytes, err = jsonMarshal(c, r, r.Body)
+// 	} else if IsXMLType(contentType) && (kind == reflect.Struct) {
+// 		bodyBytes, err = xml.Marshal(r.Body)
+// 	}
+//
+// 	if bodyBytes == nil && r.bodyBuf == nil {
+// 		err = errors.New("unsupported 'Body' type/value")
+// 	}
+//
+// 	// if any errors during body bytes handling, return it
+// 	if err != nil {
+// 		return
+// 	}
+//
+// 	// []byte into Buffer
+// 	if bodyBytes != nil && r.bodyBuf == nil {
+// 		r.bodyBuf = acquireBuffer()
+// 		_, _ = r.bodyBuf.Write(bodyBytes)
+// 	}
+//
+// 	return
+// }
 
 func (r *Response) String() string {
 	return string(r.Body)
