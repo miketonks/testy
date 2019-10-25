@@ -2,6 +2,7 @@ package testy
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -110,6 +111,12 @@ func (c *Client) Execute(method, url string) *Response {
 
 	response.Size = int64(len(response.Body))
 
+	if c.Result != nil {
+		err = json.Unmarshal(response.Body, c.Result)
+		if err != nil {
+			panic(err)
+		}
+	}
 	return &response
 }
 
@@ -214,6 +221,12 @@ func (c *Client) SetQueryString(query string) *Client {
 // SetBody ...
 func (c *Client) SetBody(body []byte) *Client {
 	c.Body = body
+	return c
+}
+
+// SetResult ...
+func (c *Client) SetResult(result interface{}) *Client {
+	c.Result = result
 	return c
 }
 
