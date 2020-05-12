@@ -80,6 +80,11 @@ func (c *Client) Post(url string) *Response {
 	return c.Execute("POST", url)
 }
 
+// Delete ...
+func (c *Client) Delete(url string) *Response {
+	return c.Execute("DELETE", url)
+}
+
 // Execute ...
 func (c *Client) Execute(method, url string) *Response {
 
