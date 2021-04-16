@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"reflect"
 	"strings"
 )
 
@@ -223,65 +224,59 @@ func (c *Client) SetQueryString(query string) *Client {
 	return c
 }
 
-// SetBody ...
-func (c *Client) SetBody(body []byte) *Client {
-	c.Body = body
-	return c
-}
-
 // SetResult ...
 func (c *Client) SetResult(result interface{}) *Client {
 	c.Result = result
 	return c
 }
 
-//
-// // SetBody ...
-// func (c *Client) SetBody(body interface{}) *Client {
-//
-// 	var bodyBytes []byte
-// 	contentType := r.Header.Get("Content-Type")
-// 	kind := kindOf(body)
-// 	r.bodyBuf = nil
-//
-// 	if reader, ok := r.Body.(io.Reader); ok {
-// 		if c.setContentLength || r.setContentLength { // keep backward compability
-// 			r.bodyBuf = acquireBuffer()
-// 			_, err = r.bodyBuf.ReadFrom(reader)
-// 			r.Body = nil
-// 		} else {
-// 			// Otherwise buffer less processing for `io.Reader`, sounds good.
-// 			return
-// 		}
-// 	} else if b, ok := r.Body.([]byte); ok {
-// 		bodyBytes = b
-// 	} else if s, ok := r.Body.(string); ok {
-// 		bodyBytes = []byte(s)
-// 	} else if IsJSONType(contentType) &&
-// 		(kind == reflect.Struct || kind == reflect.Map || kind == reflect.Slice) {
-// 		bodyBytes, err = jsonMarshal(c, r, r.Body)
-// 	} else if IsXMLType(contentType) && (kind == reflect.Struct) {
-// 		bodyBytes, err = xml.Marshal(r.Body)
-// 	}
-//
-// 	if bodyBytes == nil && r.bodyBuf == nil {
-// 		err = errors.New("unsupported 'Body' type/value")
-// 	}
-//
-// 	// if any errors during body bytes handling, return it
-// 	if err != nil {
-// 		return
-// 	}
-//
-// 	// []byte into Buffer
-// 	if bodyBytes != nil && r.bodyBuf == nil {
-// 		r.bodyBuf = acquireBuffer()
-// 		_, _ = r.bodyBuf.Write(bodyBytes)
-// 	}
-//
-// 	return
-// }
+// SetBody method sets the request body for the request. Similar to resty.
+// We can say its quite handy or powerful. Supported request body data types is `string`,
+// `[]byte`, `struct`, `map` and `slice` (not io.Reader currently).
+// Automatic marshalling for JSON (not XML), if it is `struct`, `map`, or `slice`.
+func (c *Client) SetBody(body interface{}) *Client {
+
+	var bodyBytes []byte
+	//contentType := r.Header.Get("Content-Type")
+	kind := kindOf(body)
+
+	if b, ok := body.([]byte); ok {
+		bodyBytes = b
+	} else if s, ok := body.(string); ok {
+		bodyBytes = []byte(s)
+	} else if kind == reflect.Struct || kind == reflect.Map || kind == reflect.Slice {
+		var err error
+		bodyBytes, err = json.Marshal(body)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	if bodyBytes == nil {
+		panic("unsupported 'Body' type/value")
+	}
+
+	c.Body = bodyBytes
+	return c
+}
 
 func (r *Response) String() string {
 	return string(r.Body)
+}
+
+// Borrowed from resty/utils.go
+func typeOf(i interface{}) reflect.Type {
+	return indirect(valueOf(i)).Type()
+}
+
+func valueOf(i interface{}) reflect.Value {
+	return reflect.ValueOf(i)
+}
+
+func indirect(v reflect.Value) reflect.Value {
+	return reflect.Indirect(v)
+}
+
+func kindOf(v interface{}) reflect.Kind {
+	return typeOf(v).Kind()
 }
